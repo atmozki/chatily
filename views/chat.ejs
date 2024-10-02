@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        #chat-container { max-width: 600px; margin: 0 auto; }
+        #chat-messages { height: 400px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 20px; }
+        #chat-form { display: flex; }
+        #chat-input { flex-grow: 1; padding: 10px; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>Welcome, <%= user %>!</h1>
+        <div id="chat-messages">
+            <% messages.forEach(function(message) { %>
+                <p><strong><%= message.user %>:</strong> <%= message.content %></p>
+            <% }); %>
+        </div>
+        <form id="chat-form">
+            <input type="text" id="chat-input" autocomplete="off" placeholder="Type a message..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        // Existing socket initialization
+const socket = io();
+
+// Add connection status logging
+socket.on('connect', () => {
+    console.log('Connected to server');
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+});
+
+// Get DOM elements
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+
+// Update the chat form submission with error handling
+chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const messageContent = chatInput.value.trim();
+
+    if (!messageContent) return;
+
+    console.log('Sending message:', messageContent);
+    
+    socket.emit('chat message', messageContent);
+
+    chatInput.value = '';
+});
+
+// Update message receiving with error handling
+socket.on('chat message', (msg) => {
+    console.log('Received message:', msg);
+    appendMessage(msg);
+});
+
+// Function to append message to the chat
+function appendMessage(msg) {
+    const messageElement = document.createElement('p');
+    messageElement.innerHTML = `<strong>${msg.user}:</strong> ${msg.content}`;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+    </script>
+</body>
+</html>
